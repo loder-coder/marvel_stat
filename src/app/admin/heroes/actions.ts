@@ -1,14 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireAdminSession } from "@/app/admin/auth";
 import { ROLE_KO_OPTIONS, upsertHeroTranslation } from "@/app/heroes/heroMeta";
 
 export async function saveHeroTranslation(formData: FormData) {
-  const adminKey = String(formData.get("adminKey") ?? "");
-
-  if (process.env.ADMIN_SECRET && adminKey !== process.env.ADMIN_SECRET) {
-    throw new Error("Unauthorized");
-  }
+  await requireAdminSession();
 
   const heroId = String(formData.get("heroId") ?? "").trim();
   const nameKo = String(formData.get("nameKo") ?? "").trim();

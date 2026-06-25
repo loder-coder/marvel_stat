@@ -1,29 +1,16 @@
-import { getHeroMeta, ROLE_KO_OPTIONS } from "@/app/heroes/heroMeta";
+import { requireAdminSession } from "@/app/admin/auth";
 import { saveHeroTranslation } from "@/app/admin/heroes/actions";
+import { logoutAdmin } from "@/app/admin/login/actions";
+import { getHeroMeta, ROLE_KO_OPTIONS, ROLE_TRANSLATIONS } from "@/app/heroes/heroMeta";
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+export const dynamic = "force-dynamic";
 
-function first(value: string | string[] | undefined): string | undefined {
-  return Array.isArray(value) ? value[0] : value;
+function defaultRoleKo(role: string): string {
+  return ROLE_TRANSLATIONS[role] ?? (ROLE_KO_OPTIONS.includes(role as (typeof ROLE_KO_OPTIONS)[number]) ? role : ROLE_KO_OPTIONS[0]);
 }
 
-function isAuthorized(key?: string): boolean {
-  return !process.env.ADMIN_SECRET || key === process.env.ADMIN_SECRET;
-}
-
-export default async function AdminHeroesPage({ searchParams }: { searchParams: SearchParams }) {
-  const params = await searchParams;
-  const adminKey = first(params.key) ?? "";
-
-  if (!isAuthorized(adminKey)) {
-    return (
-      <section className="panel">
-        <p className="eyebrow">ADMIN</p>
-        <h1>영웅 번역 관리</h1>
-        <p className="notice error">관리자 키가 올바르지 않습니다.</p>
-      </section>
-    );
-  }
+export default async function AdminHeroesPage() {
+  await requireAdminSession();
 
   let heroes = [];
 
@@ -41,18 +28,23 @@ export default async function AdminHeroesPage({ searchParams }: { searchParams: 
 
   return (
     <section className="panel">
-      <p className="eyebrow">ADMIN</p>
-      <h1>영웅 번역 관리</h1>
-      <p className="updated">저장하면 /heroes 페이지의 영웅명과 역할군 표기가 갱신됩니다.</p>
+      <div className="title-row">
+        <div>
+          <p className="eyebrow">ADMIN</p>
+          <h1>영웅 번역 관리</h1>
+          <p className="updated">저장하면 /heroes 페이지의 영웅명과 역할군 표기가 갱신됩니다.</p>
+        </div>
+        <form action={logoutAdmin}>
+          <button type="submit">로그아웃</button>
+        </form>
+      </div>
 
       <table>
         <thead>
           <tr>
             <th>영웅 ID</th>
             <th>현재 이름</th>
-            <th>한글 이름</th>
-            <th>역할군</th>
-            <th>저장</th>
+            <th>한글 이름 / 역할군</th>
           </tr>
         </thead>
         <tbody>
@@ -60,12 +52,11 @@ export default async function AdminHeroesPage({ searchParams }: { searchParams: 
             <tr key={hero.heroId}>
               <td>{hero.heroId}</td>
               <td>{hero.heroName}</td>
-              <td colSpan={3}>
+              <td>
                 <form action={saveHeroTranslation} className="admin-hero-form">
-                  <input name="adminKey" type="hidden" value={adminKey} />
                   <input name="heroId" type="hidden" value={hero.heroId} />
                   <input aria-label={`${hero.heroName} 한글 이름`} name="nameKo" required type="text" defaultValue={hero.heroName} />
-                  <select aria-label={`${hero.heroName} 역할군`} name="roleKo" required defaultValue={hero.role}>
+                  <select aria-label={`${hero.heroName} 역할군`} name="roleKo" required defaultValue={defaultRoleKo(hero.role)}>
                     {ROLE_KO_OPTIONS.map((role) => (
                       <option key={role} value={role}>
                         {role}

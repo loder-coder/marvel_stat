@@ -64,6 +64,12 @@
       "namedRegex": "^/admin/heroes(?:/)?$"
     },
     {
+      "page": "/admin/login",
+      "regex": "^/admin/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/login(?:/)?$"
+    },
+    {
       "page": "/heroes",
       "regex": "^/heroes(?:/)?$",
       "routeKeys": {},

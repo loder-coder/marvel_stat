@@ -77,6 +77,11 @@ tbody tr:last-child td{border-bottom:0}
 .admin-hero-form{display:grid;grid-template-columns:minmax(180px,1fr) 130px auto;gap:8px;align-items:center}
 .admin-hero-form input,.admin-hero-form select{background:#11131a;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px}
 .admin-hero-form button{padding:10px 14px}
+.admin-login-panel{max-width:520px;margin:0 auto}
+.admin-login-form{display:grid;gap:12px;margin-top:24px}
+.admin-login-form label{color:var(--muted);font-size:.9rem;font-weight:700}
+.admin-login-form input{background:#11131a;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:13px}
+.admin-login-form button{justify-self:start}
 @media(max-width:650px){
   main{padding:35px 16px}
   h1{font-size:2rem}
