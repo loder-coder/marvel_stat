@@ -1,11 +1,12 @@
 {
   "/api/heroes/route": "app/api/heroes/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/api/players/[playerId]/refresh/route": "app/api/players/[playerId]/refresh/route.js",
   "/api/players/search/route": "app/api/players/search/route.js",
   "/api/players/[playerId]/route": "app/api/players/[playerId]/route.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
-  "/players/[playerId]/page": "app/players/[playerId]/page.js",
+  "/admin/heroes/page": "app/admin/heroes/page.js",
   "/players/page": "app/players/page.js",
+  "/players/[playerId]/page": "app/players/[playerId]/page.js",
+  "/page": "app/page.js",
   "/heroes/page": "app/heroes/page.js"
 }

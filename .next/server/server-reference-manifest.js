@@ -1,1 +1,1 @@
-self.__RSC_SERVER_MANIFEST="{\"node\":{},\"edge\":{},\"encryptionKey\":\"process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY\"}"
+self.__RSC_SERVER_MANIFEST="{\"node\":{\"40abd57938c1db06f94e83c0bc72aac5a7634ef72c\":{\"workers\":{\"app/admin/heroes/page\":{\"moduleId\":\"6352\",\"async\":false}},\"layer\":{\"app/admin/heroes/page\":\"rsc\"},\"filename\":\"../D:\\\\IT\\\\marvel_stat\\\\src\\\\app\\\\admin\\\\heroes\\\\actions.ts\",\"exportedName\":\"saveHeroTranslation\"}},\"edge\":{},\"encryptionKey\":\"process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY\"}"

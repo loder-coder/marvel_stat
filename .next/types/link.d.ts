@@ -33,6 +33,7 @@ declare namespace __next_route_internal_types__ {
 
   type StaticRoutes = 
     | `/`
+    | `/admin/heroes`
     | `/api/heroes`
     | `/api/players/search`
     | `/heroes`

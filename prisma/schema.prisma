@@ -21,3 +21,10 @@ model Hero { id String @id; name String; role String; snapshots HeroStatSnapshot
 model HeroStatSnapshot { id String @id @default(cuid()); heroId String; snapshotDate DateTime; payload Json; hero Hero @relation(fields:[heroId], references:[id]); @@index([heroId, snapshotDate]) }
 model TierSnapshot { id String @id @default(cuid()); snapshotDate DateTime @unique; payload Json; createdAt DateTime @default(now()) }
 model ApiRefreshLog { id String @id @default(cuid()); scope String; status String; apiCalls Int @default(0); rateLimitRemaining Int?; detail Json?; createdAt DateTime @default(now()) }
+
+model HeroTranslation {
+  heroId    String   @id
+  nameKo    String
+  roleKo    String
+  updatedAt DateTime @updatedAt
+}
