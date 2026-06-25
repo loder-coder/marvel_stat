@@ -1,18 +1,39 @@
 import { requireAdminSession } from "@/app/admin/auth";
 import { saveHeroTranslation } from "@/app/admin/heroes/actions";
 import { logoutAdmin } from "@/app/admin/login/actions";
-import { getHeroMeta, ROLE_KO_OPTIONS, ROLE_TRANSLATIONS } from "@/app/heroes/heroMeta";
+import { getHeroMeta, ROLE_KO_OPTIONS, ROLE_TRANSLATIONS, type HeroMeta } from "@/app/heroes/heroMeta";
 
 export const dynamic = "force-dynamic";
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function first(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 function defaultRoleKo(role: string): string {
   return ROLE_TRANSLATIONS[role] ?? (ROLE_KO_OPTIONS.includes(role as (typeof ROLE_KO_OPTIONS)[number]) ? role : ROLE_KO_OPTIONS[0]);
 }
 
-export default async function AdminHeroesPage() {
+function statusMessage(saved?: string, error?: string) {
+  if (saved === "1") return <p className="badge">저장되었습니다.</p>;
+  if (error === "invalid") return <p className="notice error">영웅 이름과 역할군을 모두 입력해주세요.</p>;
+  if (error === "invalid-role") return <p className="notice error">역할군 값이 올바르지 않습니다.</p>;
+  if (error === "save-failed") {
+    return (
+      <p className="notice error">
+        저장에 실패했습니다. Vercel의 Supabase 환경변수, HeroTranslation 테이블, RLS 정책을 확인해주세요.
+      </p>
+    );
+  }
+  return null;
+}
+
+export default async function AdminHeroesPage({ searchParams }: { searchParams: SearchParams }) {
   await requireAdminSession();
 
-  let heroes = [];
+  const params = await searchParams;
+  let heroes: HeroMeta[] = [];
 
   try {
     heroes = await getHeroMeta();
@@ -38,6 +59,8 @@ export default async function AdminHeroesPage() {
           <button type="submit">로그아웃</button>
         </form>
       </div>
+
+      {statusMessage(first(params.saved), first(params.error))}
 
       <table>
         <thead>

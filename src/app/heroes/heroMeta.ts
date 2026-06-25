@@ -1,4 +1,4 @@
-export type Tier = "S" | "A" | "B" | "C" | "D" | "권외";
+export type Tier = "S" | "A" | "B" | "C" | "D" | "\uAD8C\uC678";
 
 export type HeroMeta = {
   heroId: string;
@@ -21,7 +21,7 @@ export type HeroTranslationInput = {
 };
 
 type HeroTranslation = HeroTranslationInput & {
-  updatedAt?: Date;
+  updatedAt?: Date | string;
 };
 
 type RawHero = {
@@ -50,15 +50,15 @@ type RawHeroStats = {
 
 const API_BASE_URL = "https://marvelrivalsapi.com/api/v1";
 const ASSET_BASE_URL = "https://marvelrivalsapi.com/rivals";
+const SUPABASE_TABLE = "HeroTranslation";
 
-export const TIER_ORDER: Record<Tier, number> = { S: 0, A: 1, B: 2, C: 3, D: 4, 권외: 5 };
-
-export const ROLE_KO_OPTIONS = ["공격형", "수호형", "지원형"] as const;
+export const TIER_ORDER: Record<Tier, number> = { S: 0, A: 1, B: 2, C: 3, D: 4, "\uAD8C\uC678": 5 };
+export const ROLE_KO_OPTIONS = ["\uACF5\uACA9\uD615", "\uC218\uD638\uD615", "\uC9C0\uC6D0\uD615"] as const;
 
 export const ROLE_TRANSLATIONS: Record<string, string> = {
-  Duelist: "공격형",
-  Vanguard: "수호형",
-  Strategist: "지원형"
+  Duelist: "\uACF5\uACA9\uD615",
+  Vanguard: "\uC218\uD638\uD615",
+  Strategist: "\uC9C0\uC6D0\uD615"
 };
 
 export const MOCK_HERO_META: HeroMeta[] = [
@@ -71,6 +71,12 @@ export const MOCK_HERO_META: HeroMeta[] = [
 
 function useMockData(): boolean {
   return process.env.USE_MOCK_DATA === "true" || !process.env.MARVEL_RIVALS_API_KEY;
+}
+
+function getSupabaseConfig(): { url: string; key: string } | undefined {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  return url && key ? { url, key } : undefined;
 }
 
 function canUseDatabase(): boolean {
@@ -102,6 +108,49 @@ async function getHeroTranslationDelegate(): Promise<HeroTranslationDelegate | u
   }
 }
 
+function supabaseHeaders(key: string): HeadersInit {
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json"
+  };
+}
+
+async function getTranslationsFromSupabase(): Promise<HeroTranslation[]> {
+  const config = getSupabaseConfig();
+  if (!config) return [];
+
+  const response = await fetch(`${config.url}/rest/v1/${SUPABASE_TABLE}?select=heroId,nameKo,roleKo,updatedAt`, {
+    headers: supabaseHeaders(config.key),
+    cache: "no-store"
+  });
+
+  if (!response.ok) throw new Error(`Supabase translation fetch failed (${response.status})`);
+  return response.json() as Promise<HeroTranslation[]>;
+}
+
+async function upsertTranslationToSupabase(input: HeroTranslationInput): Promise<void> {
+  const config = getSupabaseConfig();
+  if (!config) throw new Error("Supabase env vars are required.");
+
+  const response = await fetch(`${config.url}/rest/v1/${SUPABASE_TABLE}?on_conflict=heroId`, {
+    method: "POST",
+    headers: {
+      ...supabaseHeaders(config.key),
+      Prefer: "resolution=merge-duplicates"
+    },
+    body: JSON.stringify({
+      ...input,
+      updatedAt: new Date().toISOString()
+    })
+  });
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => "");
+    throw new Error(`Supabase translation upsert failed (${response.status}) ${message}`);
+  }
+}
+
 function toAssetUrl(path?: string | null): string {
   if (!path?.trim()) return "";
   const trimmed = path.trim();
@@ -115,7 +164,7 @@ function round(value: number, digits: number): number {
 }
 
 export function calcTier(matches: number, winRate: number): Tier {
-  if (matches < 100) return "권외";
+  if (matches < 100) return "\uAD8C\uC678";
   if (matches >= 1000 && winRate >= 52.5) return "S";
   if (matches >= 500 && winRate >= 51.5) return "A";
   if (matches >= 300 && winRate >= 50.5) return "B";
@@ -161,6 +210,13 @@ function mapHeroMeta(hero: RawHero, stats: RawHeroStats): HeroMeta {
 
 async function getTranslations(): Promise<HeroTranslation[]> {
   try {
+    const supabaseTranslations = await getTranslationsFromSupabase();
+    if (supabaseTranslations.length > 0) return supabaseTranslations;
+  } catch {
+    // Fall back to Prisma if Supabase is not configured or not ready.
+  }
+
+  try {
     const heroTranslation = await getHeroTranslationDelegate();
     if (!heroTranslation) return [];
     return await heroTranslation.findMany();
@@ -205,8 +261,15 @@ export async function getHeroMeta(): Promise<HeroMeta[]> {
 }
 
 export async function upsertHeroTranslation(input: HeroTranslationInput): Promise<void> {
+  if (getSupabaseConfig()) {
+    await upsertTranslationToSupabase(input);
+    return;
+  }
+
   const heroTranslation = await getHeroTranslationDelegate();
-  if (!heroTranslation) throw new Error("Prisma client is not ready. Run prisma generate and configure DATABASE_URL.");
+  if (!heroTranslation) {
+    throw new Error("Supabase env vars or DATABASE_URL are required to save hero translations.");
+  }
 
   await heroTranslation.upsert({
     where: { heroId: input.heroId },
