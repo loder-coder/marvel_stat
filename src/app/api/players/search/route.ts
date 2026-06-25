@@ -1,0 +1,4 @@
+import { NextRequest, NextResponse } from "next/server";
+import { searchPlayer } from "@/lib/playerService";
+import { allowRequest } from "@/lib/requestRateLimit";
+export async function GET(request: NextRequest) { const subject = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous"; const guard = await allowRequest(subject, "player-search", 30, 60); if (!guard.allowed) return NextResponse.json({ error: "RATE_LIMITED" }, { status: 429, headers: { "Retry-After": "60" } }); try { const nickname = request.nextUrl.searchParams.get("nickname") ?? ""; return NextResponse.json(await searchPlayer(nickname), { headers: { "X-RateLimit-Remaining": String(guard.remaining) } }); } catch (error) { const code = error instanceof Error ? error.message : "UNKNOWN"; const status = code === "INVALID_NICKNAME" ? 400 : code === "DAILY_BUDGET" ? 429 : 404; return NextResponse.json({ error: code }, { status }); } }

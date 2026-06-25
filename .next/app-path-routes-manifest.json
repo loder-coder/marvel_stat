@@ -1,0 +1,9 @@
+{
+  "/api/players/search/route": "/api/players/search",
+  "/api/players/[playerId]/refresh/route": "/api/players/[playerId]/refresh",
+  "/api/players/[playerId]/route": "/api/players/[playerId]",
+  "/page": "/",
+  "/players/page": "/players",
+  "/players/[playerId]/page": "/players/[playerId]",
+  "/_not-found/page": "/_not-found"
+}

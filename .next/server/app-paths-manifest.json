@@ -1,0 +1,9 @@
+{
+  "/api/players/search/route": "app/api/players/search/route.js",
+  "/api/players/[playerId]/refresh/route": "app/api/players/[playerId]/refresh/route.js",
+  "/api/players/[playerId]/route": "app/api/players/[playerId]/route.js",
+  "/page": "app/page.js",
+  "/players/page": "app/players/page.js",
+  "/players/[playerId]/page": "app/players/[playerId]/page.js",
+  "/_not-found/page": "app/_not-found/page.js"
+}

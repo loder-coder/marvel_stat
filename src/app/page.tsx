@@ -1,0 +1,1 @@
+export default function Home() { return <section className="panel hero"><p className="eyebrow">MARVEL RIVALS · MVP</p><h1>메타는 매일, 플레이어는 필요할 때.</h1><p>영웅/티어 통계는 오전 6시 일괄 갱신하고, 플레이어 데이터는 짧은 TTL 캐시로 필요한 순간에만 갱신합니다.</p><a className="button" href="/players">플레이어 검색하기</a></section>; }
