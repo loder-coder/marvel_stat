@@ -1,4 +1,5 @@
 export type Tier = "S" | "A" | "B" | "C" | "D" | "\uAD8C\uC678";
+export type HeroStatsStatus = "ok" | "api-failed" | "invalid-response" | "missing-name";
 
 export type HeroMeta = {
   heroId: string;
@@ -12,6 +13,8 @@ export type HeroMeta = {
   totalDamage: number;
   totalHeal: number;
   hitRate: number;
+  statsStatus: HeroStatsStatus;
+  statsStatusDetail?: string;
 };
 
 export type HeroTranslationInput = {
@@ -62,11 +65,11 @@ export const ROLE_TRANSLATIONS: Record<string, string> = {
 };
 
 export const MOCK_HERO_META: HeroMeta[] = [
-  { heroId: "1011001", heroName: "Luna Snow", role: "Strategist", thumbnail: "", matches: 5000, winRate: 54.0, kda: 3.0, tier: "S", totalDamage: 900000000, totalHeal: 1200000000, hitRate: 62.0 },
-  { heroId: "1011002", heroName: "Magneto", role: "Vanguard", thumbnail: "", matches: 3800, winRate: 51.2, kda: 2.4, tier: "B", totalDamage: 1100000000, totalHeal: 0, hitRate: 55.0 },
-  { heroId: "1011003", heroName: "Spider-Man", role: "Duelist", thumbnail: "", matches: 4200, winRate: 48.7, kda: 2.8, tier: "D", totalDamage: 1300000000, totalHeal: 0, hitRate: 71.0 },
-  { heroId: "1011004", heroName: "Scarlet Witch", role: "Duelist", thumbnail: "", matches: 2900, winRate: 52.3, kda: 2.6, tier: "A", totalDamage: 1050000000, totalHeal: 0, hitRate: 58.0 },
-  { heroId: "1011005", heroName: "Thor", role: "Vanguard", thumbnail: "", matches: 3100, winRate: 49.8, kda: 2.1, tier: "C", totalDamage: 980000000, totalHeal: 0, hitRate: 61.0 }
+  { heroId: "1011001", heroName: "Luna Snow", role: "Strategist", thumbnail: "", matches: 5000, winRate: 54.0, kda: 3.0, tier: "S", totalDamage: 900000000, totalHeal: 1200000000, hitRate: 62.0, statsStatus: "ok" },
+  { heroId: "1011002", heroName: "Magneto", role: "Vanguard", thumbnail: "", matches: 3800, winRate: 51.2, kda: 2.4, tier: "B", totalDamage: 1100000000, totalHeal: 0, hitRate: 55.0, statsStatus: "ok" },
+  { heroId: "1011003", heroName: "Spider-Man", role: "Duelist", thumbnail: "", matches: 4200, winRate: 48.7, kda: 2.8, tier: "D", totalDamage: 1300000000, totalHeal: 0, hitRate: 71.0, statsStatus: "ok" },
+  { heroId: "1011004", heroName: "Scarlet Witch", role: "Duelist", thumbnail: "", matches: 2900, winRate: 52.3, kda: 2.6, tier: "A", totalDamage: 1050000000, totalHeal: 0, hitRate: 58.0, statsStatus: "ok" },
+  { heroId: "1011005", heroName: "Thor", role: "Vanguard", thumbnail: "", matches: 3100, winRate: 49.8, kda: 2.1, tier: "C", totalDamage: 980000000, totalHeal: 0, hitRate: 61.0, statsStatus: "ok" }
 ];
 
 function useMockData(): boolean {
@@ -185,6 +188,20 @@ async function fetchJson<T>(url: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function hasRecognizedStats(stats: RawHeroStats): boolean {
+  return (
+    typeof stats.matches === "number" ||
+    typeof stats.wins === "number" ||
+    typeof stats.k === "number" ||
+    typeof stats.d === "number" ||
+    typeof stats.a === "number"
+  );
+}
+
 function mapHeroMeta(hero: RawHero, stats: RawHeroStats): HeroMeta {
   const matches = stats.matches ?? 0;
   const wins = stats.wins ?? 0;
@@ -204,14 +221,33 @@ function mapHeroMeta(hero: RawHero, stats: RawHeroStats): HeroMeta {
     tier: calcTier(matches, winRate),
     totalDamage: stats.total_hero_damage ?? 0,
     totalHeal: stats.total_hero_heal ?? 0,
-    hitRate: round((stats.session_hit_rate ?? 0) * 100, 1)
+    hitRate: round((stats.session_hit_rate ?? 0) * 100, 1),
+    statsStatus: hasRecognizedStats(stats) ? "ok" : "invalid-response",
+    statsStatusDetail: hasRecognizedStats(stats) ? undefined : "Stats response did not include expected numeric fields."
+  };
+}
+
+function mapHeroWithoutStats(hero: RawHero, statsStatus: HeroStatsStatus, statsStatusDetail?: string): HeroMeta {
+  return {
+    heroId: String(hero.id ?? hero.name ?? ""),
+    heroName: hero.name ?? "Unknown Hero",
+    role: hero.role ?? "Unknown",
+    thumbnail: toAssetUrl(hero.thumbnail),
+    matches: 0,
+    winRate: 0,
+    kda: 0,
+    tier: "\uAD8C\uC678",
+    totalDamage: 0,
+    totalHeal: 0,
+    hitRate: 0,
+    statsStatus,
+    statsStatusDetail
   };
 }
 
 async function getTranslations(): Promise<HeroTranslation[]> {
   try {
-    const supabaseTranslations = await getTranslationsFromSupabase();
-    if (supabaseTranslations.length > 0) return supabaseTranslations;
+    return await getTranslationsFromSupabase();
   } catch {
     // Fall back to Prisma if Supabase is not configured or not ready.
   }
@@ -242,20 +278,39 @@ function applyTranslations(heroes: HeroMeta[], translations: HeroTranslation[]):
 
 async function fetchHeroMetaFromApi(): Promise<HeroMeta[]> {
   const heroes = await fetchJson<RawHero[]>(`${API_BASE_URL}/heroes`);
-  const statsResults = await Promise.allSettled(
-    heroes
-      .filter((hero) => hero.name)
-      .map(async (hero) => {
-        const stats = await fetchJson<RawHeroStats>(`${API_BASE_URL}/heroes/hero/${encodeURIComponent(hero.name ?? "")}/stats`);
+  const statsResults = await Promise.all(
+    heroes.map(async (hero) => {
+      if (!hero.name) {
+        console.warn("[hero-meta] Missing hero name from heroes list", { heroId: hero.id });
+        return mapHeroWithoutStats(hero, "missing-name", "Hero list item did not include name.");
+      }
+
+      try {
+        const stats = await fetchJson<RawHeroStats>(`${API_BASE_URL}/heroes/hero/${encodeURIComponent(hero.name)}/stats`);
         return mapHeroMeta(hero, stats);
-      })
+      } catch (error) {
+        const message = getErrorMessage(error);
+        console.warn("[hero-meta] Hero stats API failed", { heroId: hero.id, heroName: hero.name, error: message });
+        return mapHeroWithoutStats(hero, "api-failed", message);
+      }
+    })
   );
 
-  return statsResults.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+  return statsResults;
 }
 
 export async function getHeroMeta(): Promise<HeroMeta[]> {
-  const heroes = useMockData() ? MOCK_HERO_META : await fetchHeroMetaFromApi();
+  let heroes = MOCK_HERO_META;
+
+  if (!useMockData()) {
+    try {
+      const apiHeroes = await fetchHeroMetaFromApi();
+      heroes = apiHeroes.length > 0 ? apiHeroes : MOCK_HERO_META;
+    } catch {
+      heroes = MOCK_HERO_META;
+    }
+  }
+
   const translations = await getTranslations();
   return applyTranslations(heroes, translations);
 }

@@ -1,9 +1,9 @@
 {
   "/api/heroes/route": "/api/heroes",
-  "/api/players/[playerId]/refresh/route": "/api/players/[playerId]/refresh",
-  "/api/players/[playerId]/route": "/api/players/[playerId]",
-  "/api/players/search/route": "/api/players/search",
   "/_not-found/page": "/_not-found",
+  "/api/players/[playerId]/route": "/api/players/[playerId]",
+  "/api/players/[playerId]/refresh/route": "/api/players/[playerId]/refresh",
+  "/api/players/search/route": "/api/players/search",
   "/admin/login/page": "/admin/login",
   "/page": "/",
   "/players/[playerId]/page": "/players/[playerId]",
