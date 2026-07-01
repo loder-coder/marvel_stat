@@ -23,7 +23,9 @@ Redis current → Redis last-success(stale) → memory cache → official fallba
 Redis 분산 lock → RivalsMeta 공개 HTML 1회 → 파싱/검증 → Redis + memory cache
 ```
 
-Redis 장애 시 메모리 캐시를 사용합니다. Redis와 메모리 캐시가 모두 없을 때만 기존 공식 Hero Hot List fallback을 사용합니다.
+Redis 장애 시 메모리 캐시를 사용합니다. Redis lock 또는 write 실패는 RivalsMeta 갱신 결과 자체를 실패시키지 않습니다. Redis와 메모리 캐시가 모두 없을 때만 기존 공식 Hero Hot List fallback을 사용합니다.
+
+Vercel 같은 서버리스 환경에서는 TCP 연결이 필요 없는 Upstash REST 방식을 권장합니다. `UPSTASH_REDIS_REST_URL`과 `UPSTASH_REDIS_REST_TOKEN`이 모두 있으면 REST 클라이언트를 우선 사용합니다. 두 값이 없을 때만 `REDIS_URL` 기반 ioredis를 fallback으로 사용합니다.
 
 Redis 키:
 
@@ -38,7 +40,11 @@ Redis 키:
 RIVALSMETA_BASE_URL=https://rivalsmeta.com
 RIVALSMETA_REFRESH_INTERVAL_HOURS=24
 RIVALSMETA_MIN_REQUEST_DELAY_MS=2000
-REDIS_URL=redis://...
+UPSTASH_REDIS_REST_URL=https://...
+UPSTASH_REDIS_REST_TOKEN=...
+
+# TCP fallback only
+REDIS_URL=rediss://...
 ADMIN_SECRET=충분히-긴-관리자-토큰
 CRON_SECRET=별도의-충분히-긴-cron-토큰
 ```
@@ -53,6 +59,8 @@ npm run dev
 ```
 
 Redis가 없는 로컬 환경에서도 메모리 캐시와 공식 fallback으로 실행됩니다.
+
+`REDIS_URL=https://...` 형식은 ioredis TCP URL이 아니므로 사용할 수 없습니다. 이 경우 Redis unavailable로 처리되고 메모리 캐시로 fallback합니다. TCP fallback은 `redis://` 또는 TLS가 적용된 `rediss://`를 사용하세요.
 
 ## API
 

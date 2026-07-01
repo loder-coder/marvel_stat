@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@upstash/redis": "^1.38.0",
     "cheerio": "^1.2.0",
     "devalue": "^5.8.1",
     "ioredis": "^5.11.1",
