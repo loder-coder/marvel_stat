@@ -1,8 +1,8 @@
-import { adaptRivalsMetaHeroes } from "@/lib/heroAdapter";
+import { adaptRivalsMetaHeroes, mergeRivalsMetaHeroes } from "@/lib/heroAdapter";
 import { fetchOfficialHeroTsv, OFFICIAL_HERO_PC_URL } from "@/lib/officialHeroClient";
 import { HERO_TIERS, parseHeroTsv, type HeroMeta, type HeroMode, type HeroTier } from "@/lib/officialHeroParser";
-import { fetchRivalsMetaTierList } from "@/lib/rivalsMetaClient";
-import { parseRivalsMetaTierList } from "@/lib/rivalsMetaParser";
+import { fetchRivalsMetaCharactersHtml, fetchRivalsMetaTierList } from "@/lib/rivalsMetaClient";
+import { parseRivalsMetaCharacters, parseRivalsMetaTierList } from "@/lib/rivalsMetaParser";
 import {
   acquireRedisRefreshLock,
   readRedisSnapshot,
@@ -28,7 +28,7 @@ type GlobalCache = typeof globalThis & {
 const shared = globalThis as GlobalCache;
 
 export type HeroSource = "rivalsmeta" | "official";
-export type HeroSort = "pickRate" | "winRate" | "hero";
+export type HeroSort = "pickRate" | "banRate" | "matches" | "winRate" | "hero";
 export type HeroFilters = {
   platform?: string;
   mode?: HeroMode;
@@ -55,14 +55,19 @@ function result(snapshot: CachedHeroSnapshot, stale: boolean): HeroResult {
 
 async function fetchRivalsMetaSnapshot(): Promise<CachedHeroSnapshot> {
   const page = await fetchRivalsMetaTierList();
+  const charactersPage = await fetchRivalsMetaCharactersHtml();
   const dataset = parseRivalsMetaTierList(page.html, { sourceUrl: page.sourceUrl, updatedAt: page.fetchedAt });
+  const characters = parseRivalsMetaCharacters(charactersPage.html, { sourceUrl: charactersPage.sourceUrl });
+  const mergedHeroes = mergeRivalsMetaHeroes(dataset.heroes, characters);
   return {
-    data: adaptRivalsMetaHeroes(dataset.heroes),
+    data: adaptRivalsMetaHeroes(mergedHeroes),
     source: "rivalsmeta",
     sourceUrl: dataset.sourceUrl,
     season: dataset.season,
     availableRankFilters: dataset.rankFilters,
     partialErrors: dataset.errors,
+    charactersSourceUrl: charactersPage.sourceUrl,
+    charactersScope: "global_or_default_characters_page",
     updatedAt: dataset.updatedAt,
     expiresAt: Date.now() + CACHE_TTL_MS
   };
@@ -77,6 +82,8 @@ async function fetchOfficialSnapshot(): Promise<CachedHeroSnapshot> {
     season: "",
     availableRankFilters: [],
     partialErrors: [],
+    charactersSourceUrl: undefined,
+    charactersScope: undefined,
     updatedAt: data[0].updatedAt,
     expiresAt: Date.now() + CACHE_TTL_MS
   };
@@ -137,7 +144,9 @@ export function filterHeroes(heroes: HeroMeta[], filters: HeroFilters): HeroMeta
   );
   const sort = filters.sort ?? "pickRate";
   return [...filtered].sort((a, b) =>
-    sort === "hero" ? a.hero.localeCompare(b.hero) : b[sort] - a[sort] || a.hero.localeCompare(b.hero)
+    sort === "hero"
+      ? a.hero.localeCompare(b.hero)
+      : (b[sort] ?? -1) - (a[sort] ?? -1) || a.hero.localeCompare(b.hero)
   );
 }
 

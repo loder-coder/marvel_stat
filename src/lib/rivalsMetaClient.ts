@@ -7,27 +7,36 @@ export type RivalsMetaPage = {
   fetchedAt: Date;
 };
 
-function getTierListUrl(): string {
+function getPublicPageUrl(path: string): string {
   const baseUrl = process.env.RIVALSMETA_BASE_URL?.trim() || DEFAULT_BASE_URL;
-  return new URL("/tier-list", baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
+  return new URL(path, baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`).toString();
 }
 
-/** Fetches only RivalsMeta's public tier-list HTML without browser impersonation or bypass behavior. */
-export async function fetchRivalsMetaTierList(fetcher: typeof fetch = fetch): Promise<RivalsMetaPage> {
-  const sourceUrl = getTierListUrl();
+async function fetchPublicPage(path: string, label: string, fetcher: typeof fetch): Promise<RivalsMetaPage> {
+  const sourceUrl = getPublicPageUrl(path);
   let response: Response;
   try {
-    console.info("[rivalsmeta] Fetching public tier-list HTML for scheduled/admin refresh");
+    console.info(`[rivalsmeta] Fetching public ${label} HTML for scheduled/admin refresh`);
     response = await fetcher(sourceUrl, {
-      headers: { "User-Agent": "HeroMetaDashboard/1.0 (+public-tier-list-cache)" },
+      headers: { "User-Agent": "HeroMetaDashboard/1.0 (+public-stats-cache)" },
       cache: "no-store",
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
     });
   } catch (error) {
-    throw new Error(`RivalsMeta tier list request failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(`RivalsMeta ${label} request failed: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (!response.ok) throw new Error(`RivalsMeta tier list returned HTTP ${response.status}`);
+  if (!response.ok) throw new Error(`RivalsMeta ${label} returned HTTP ${response.status}`);
   const html = await response.text();
-  if (!html.trim()) throw new Error("RivalsMeta tier list returned an empty document");
+  if (!html.trim()) throw new Error(`RivalsMeta ${label} returned an empty document`);
   return { html, sourceUrl, fetchedAt: new Date() };
+}
+
+/** Fetches only RivalsMeta's public tier-list HTML without browser impersonation or bypass behavior. */
+export function fetchRivalsMetaTierList(fetcher: typeof fetch = fetch): Promise<RivalsMetaPage> {
+  return fetchPublicPage("/tier-list", "tier-list", fetcher);
+}
+
+/** Fetches only RivalsMeta's public characters statistics HTML. */
+export function fetchRivalsMetaCharactersHtml(fetcher: typeof fetch = fetch): Promise<RivalsMetaPage> {
+  return fetchPublicPage("/characters", "characters", fetcher);
 }

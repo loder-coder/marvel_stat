@@ -21,7 +21,22 @@ const clamp = (value: number): number => Math.min(100, Math.max(0, value));
 /** Calculates a stable 0-100 score. Optional metrics can be weighted here without UI changes. */
 export function calculateMetaScore(input: MetaScoreInput): number {
   const winRateAdjustment = (input.winRate - 50) * 1.5;
-  return Math.round(clamp(TIER_BASE_SCORE[input.tier] + winRateAdjustment) * 10) / 10;
+  const tierWinRateScore = clamp(TIER_BASE_SCORE[input.tier] + winRateAdjustment);
+  const hasExtendedStats =
+    input.pickRate !== undefined ||
+    input.banRate !== undefined ||
+    input.matches !== undefined;
+  if (!hasExtendedStats) return Math.round(tierWinRateScore * 10) / 10;
+
+  const pickRateScore = clamp(((input.pickRate ?? 0) / 20) * 100);
+  const banRateScore = clamp(((input.banRate ?? 0) / 20) * 100);
+  const confidenceScore = clamp((Math.log10((input.matches ?? 0) + 1) / 5) * 100);
+  const score =
+    tierWinRateScore * 0.75 +
+    pickRateScore * 0.15 +
+    banRateScore * 0.05 +
+    confidenceScore * 0.05;
+  return Math.round(clamp(score) * 10) / 10;
 }
 
 export function tierFromMetaScore(score: number): RivalsMetaTier {

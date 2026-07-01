@@ -3,6 +3,9 @@ export type HistoryPoint = {
   winRate: number;
   metaScore: number;
   metaTier: string;
+  pickRate?: number;
+  banRate?: number;
+  matches?: number;
 };
 
 export type HistoryDelta = {
@@ -11,6 +14,9 @@ export type HistoryDelta = {
   tierChanged: boolean;
   previousTier: string;
   latestTier: string;
+  pickRate: number | null;
+  banRate: number | null;
+  matches: number | null;
 };
 
 const round = (value: number): number => Math.round(value * 100) / 100;
@@ -26,5 +32,15 @@ export function calculateHistoryDelta(data: HistoryPoint[]): HistoryDelta | null
     tierChanged: first.metaTier !== latest.metaTier,
     previousTier: first.metaTier,
     latestTier: latest.metaTier
+    ,
+    pickRate: first.pickRate !== undefined && latest.pickRate !== undefined
+      ? round(latest.pickRate - first.pickRate)
+      : null,
+    banRate: first.banRate !== undefined && latest.banRate !== undefined
+      ? round(latest.banRate - first.banRate)
+      : null,
+    matches: first.matches !== undefined && latest.matches !== undefined
+      ? latest.matches - first.matches
+      : null
   };
 }

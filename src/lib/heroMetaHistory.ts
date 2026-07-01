@@ -26,7 +26,10 @@ const HistoryRowSchema = z.array(z.object({
   win_rate: z.coerce.number(),
   meta_score: z.coerce.number(),
   meta_tier: z.string(),
-  season: z.string()
+  season: z.string(),
+  pick_rate: z.coerce.number().nullable().optional(),
+  ban_rate: z.coerce.number().nullable().optional(),
+  matches: z.coerce.number().int().nullable().optional()
 }));
 
 function filterValue(value: string): string {
@@ -75,8 +78,16 @@ export async function saveHeroMetaSnapshots(input: SaveHeroMetaSnapshotsInput): 
     pick_rate: hero.pickRate,
     ban_rate: hero.banRate ?? null,
     matches: hero.matches ?? null,
+    role: hero.role || null,
+    characters_source_url: hero.charactersSourceUrl ?? null,
+    characters_scope: hero.charactersScope ?? null,
     source_url: input.sourceUrl,
-    raw: hero
+    raw: {
+      merged: hero,
+      tierListSourceUrl: input.sourceUrl,
+      charactersSourceUrl: hero.charactersSourceUrl ?? null,
+      charactersScope: hero.charactersScope ?? null
+    }
   }));
 
   let saved = 0;
@@ -140,7 +151,7 @@ export async function getHeroMetaHistory(args: {
   const from = new Date();
   from.setUTCDate(from.getUTCDate() - args.days + 1);
   const query = new URLSearchParams({
-    select: "snapshot_date,win_rate,meta_score,meta_tier,season",
+    select: "snapshot_date,win_rate,meta_score,meta_tier,season,pick_rate,ban_rate,matches",
     source: "eq.rivalsmeta",
     hero: `eq.${filterValue(args.hero)}`,
     rank_filter: `eq.${filterValue(args.rankFilter)}`,
@@ -153,7 +164,10 @@ export async function getHeroMetaHistory(args: {
     date: row.snapshot_date,
     winRate: row.win_rate,
     metaScore: row.meta_score,
-    metaTier: row.meta_tier
+    metaTier: row.meta_tier,
+    pickRate: row.pick_rate ?? undefined,
+    banRate: row.ban_rate ?? undefined,
+    matches: row.matches ?? undefined
   }));
   return { hero: args.hero, rankFilter: args.rankFilter, season, data, delta: calculateHistoryDelta(data) };
 }

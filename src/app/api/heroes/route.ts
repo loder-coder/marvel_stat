@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { filterHeroes, getHeroes, isHeroTier, type HeroSort } from "@/lib/heroService";
 import type { HeroMode, HeroTier } from "@/lib/officialHeroParser";
 
-const SORTS = new Set<HeroSort>(["pickRate", "winRate", "hero"]);
+const SORTS = new Set<HeroSort>(["pickRate", "banRate", "matches", "winRate", "hero"]);
 const MODES = new Set<HeroMode>(["Quick", "Competitive"]);
 
 export async function GET(request: Request) {
@@ -37,6 +37,13 @@ export async function GET(request: Request) {
         season: result.season,
         rankFilter: params.get("rankFilter") ?? null,
         availableRankFilters: result.availableRankFilters,
+        availableFields: [
+          "hero", "role", "metaTier", "winRate", "pickRate", "banRate",
+          "matches", "metaScore", "rankFilter", "season"
+        ],
+        charactersSourceUrl: result.charactersSourceUrl ?? null,
+        charactersScope: result.charactersScope ?? null,
+        metaScoreFormulaVersion: "tier_winrate_pickrate_v1",
         updatedAt: result.updatedAt,
         refreshPolicy: "daily_cron_manual_refresh",
         refreshPolicyLabel: "하루 1회 자동 갱신 · 필요 시 관리자 수동 갱신",

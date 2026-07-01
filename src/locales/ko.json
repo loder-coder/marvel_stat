@@ -168,6 +168,8 @@
       "hero": "영웅",
       "role": "역할",
       "pickRate": "픽률",
+      "banRate": "밴률",
+      "matches": "매치 수",
       "winRate": "승률",
       "metaTier": "티어",
       "metaScore": "메타 점수",
@@ -178,7 +180,8 @@
       "trend": "최근 변동",
       "platform": "플랫폼",
       "search": "영웅 검색",
-      "allMetaTiers": "모든 티어"
+      "allMetaTiers": "모든 티어",
+      "charactersScope": "영웅 통계 범위"
     },
     "roles": {
       "Vanguard": "뱅가드",
@@ -187,9 +190,14 @@
     },
     "sorts": {
       "pickRate": "픽률 높은 순",
+      "banRate": "밴률 높은 순",
+      "matches": "매치 수 많은 순",
       "winRate": "승률 높은 순",
       "hero": "영웅 이름순",
       "rank": "순위"
+    },
+    "notices": {
+      "charactersScope": "픽률/밴률/매치 수는 RivalsMeta /characters 공개 페이지 기준이며, 랭크별 티어·승률 데이터와 범위가 다를 수 있습니다."
     },
     "heroes": {
       "Adam Warlock": "아담 워록",

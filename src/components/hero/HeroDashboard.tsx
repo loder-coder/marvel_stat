@@ -18,7 +18,7 @@ import {
 } from "@/lib/localize";
 import ko from "@/locales/ko.json";
 
-export type TableSort = "rank" | "hero" | "pickRate" | "winRate";
+export type TableSort = "rank" | "hero" | "pickRate" | "banRate" | "winRate" | "matches";
 type SortDirection = "asc" | "desc";
 
 type Props = {
@@ -68,7 +68,7 @@ export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
       } else if (sort === "rank") {
         comparison = (a.metaRank ?? Number.MAX_SAFE_INTEGER) - (b.metaRank ?? Number.MAX_SAFE_INTEGER);
       } else {
-        comparison = a[sort] - b[sort];
+        comparison = (a[sort] ?? -1) - (b[sort] ?? -1);
       }
       return direction === "asc" ? comparison : -comparison;
     });
@@ -126,8 +126,9 @@ export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
             <th><button title={localizeSort("hero")} onClick={() => changeSort("hero")}>{localizeField("hero")} {sortMark("hero")}</button></th>
             <th>{localizeField("role")}</th>
             <th><button title={localizeSort("pickRate")} onClick={() => changeSort("pickRate")}>{localizeField("pickRate")} {sortMark("pickRate")}</button></th>
+            <th><button title={localizeSort("banRate")} onClick={() => changeSort("banRate")}>{localizeField("banRate")} {sortMark("banRate")}</button></th>
             <th><button title={localizeSort("winRate")} onClick={() => changeSort("winRate")}>{localizeField("winRate")} {sortMark("winRate")}</button></th>
-            <th>{localizeField("trend")}</th>
+            <th><button title={localizeSort("matches")} onClick={() => changeSort("matches")}>{localizeField("matches")} {sortMark("matches")}</button></th>
           </tr></thead>
           <tbody>{visible.map((hero, index) => <HeroRow key={`${hero.source}-${hero.hero}`} hero={hero} position={index + 1} onSelect={selectHero} />)}</tbody>
         </DataTable>

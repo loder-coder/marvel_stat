@@ -28,6 +28,9 @@ const HeroSchema = z.object({
   metaScore: z.number().optional(),
   banRate: z.number().optional(),
   matches: z.number().optional()
+  ,
+  charactersSourceUrl: z.string().optional(),
+  charactersScope: z.string().optional()
 });
 const SnapshotSchema = z.object({
   data: z.array(HeroSchema).min(1),
@@ -36,6 +39,8 @@ const SnapshotSchema = z.object({
   season: z.string(),
   availableRankFilters: z.array(z.string()),
   partialErrors: z.array(z.object({ rankFilter: z.string(), message: z.string() })),
+  charactersSourceUrl: z.string().optional(),
+  charactersScope: z.string().optional(),
   updatedAt: z.string().datetime(),
   expiresAt: z.number()
 });
@@ -47,6 +52,8 @@ export type CachedHeroSnapshot = {
   season: string;
   availableRankFilters: string[];
   partialErrors: RivalsMetaPartialError[];
+  charactersSourceUrl?: string;
+  charactersScope?: string;
   updatedAt: Date;
   expiresAt: number;
 };

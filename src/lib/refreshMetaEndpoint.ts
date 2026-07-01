@@ -30,6 +30,10 @@ export async function executeMetaRefresh(): Promise<NextResponse> {
       rankFilters: result.availableRankFilters,
       count: result.data.length,
       updatedAt: result.updatedAt,
+      charactersSourceUrl: result.charactersSourceUrl ?? null,
+      charactersScope: result.charactersScope ?? null,
+      metaScoreFormulaVersion: "tier_winrate_pickrate_v1",
+      sampleHero: result.data[0] ?? null,
       history,
       partialErrors: result.partialErrors
     });

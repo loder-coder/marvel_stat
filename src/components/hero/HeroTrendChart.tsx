@@ -5,13 +5,24 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 import { localizeTier } from "@/lib/localize";
 import ko from "@/locales/ko.json";
 
-type HistoryPoint = { date: string; winRate: number; metaScore: number; metaTier: string };
+type HistoryPoint = {
+  date: string;
+  winRate: number;
+  pickRate?: number;
+  banRate?: number;
+  matches?: number;
+  metaScore: number;
+  metaTier: string;
+};
 type HistoryDelta = {
   winRate: number;
   metaScore: number;
   tierChanged: boolean;
   previousTier: string;
   latestTier: string;
+  pickRate: number | null;
+  banRate: number | null;
+  matches: number | null;
 } | null;
 type HistoryResponse = {
   hero: string;

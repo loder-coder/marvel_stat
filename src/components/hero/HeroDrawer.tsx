@@ -32,11 +32,14 @@ export function HeroDrawer({ hero, onClose }: { hero: RankedHero | null; onClose
           <div><TierBadge tier={hero.metaTier} /><h2 id="hero-detail-title">{name}</h2><p>{hero.role ? localizeRole(hero.role) : "—"}</p></div>
         </div>
         <dl className="drawer-stats">
-          <div><dt>{localizeField("pickRate")}</dt><dd>{hero.source === "rivalsmeta" ? "—" : <StatCell value={hero.pickRate} />}</dd></div>
+          <div><dt>{localizeField("pickRate")}</dt><dd>{hero.pickRate !== undefined ? <StatCell value={hero.pickRate} /> : "—"}</dd></div>
+          <div><dt>{localizeField("banRate")}</dt><dd>{hero.banRate !== undefined ? <StatCell value={hero.banRate} /> : "—"}</dd></div>
+          <div><dt>{localizeField("matches")}</dt><dd>{hero.matches !== undefined ? hero.matches.toLocaleString("ko-KR") : "—"}</dd></div>
           <div><dt>{localizeField("winRate")}</dt><dd><StatCell value={hero.winRate} emphasis /></dd></div>
           <div><dt>{localizeField("metaScore")}</dt><dd>{hero.metaScore.toFixed(2)}</dd></div>
           <div><dt>{localizeField("updatedAt")}</dt><dd>{new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeZone: "Asia/Seoul" }).format(new Date(hero.updatedAt))}</dd></div>
         </dl>
+        {hero.charactersScope && <p className="drawer-scope-notice">{ko.rivalsMeta.notices.charactersScope}</p>}
         {hero.source === "rivalsmeta" && hero.rankFilter && hero.season && (
           <HeroTrendChart hero={hero.hero} rankFilter={hero.rankFilter} season={hero.season} />
         )}

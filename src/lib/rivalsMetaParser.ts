@@ -37,6 +37,23 @@ export interface RivalsMetaHero {
   rankFilter: string;
   updatedAt: Date;
   sourceUrl: string;
+  role?: string;
+  charactersSourceUrl?: string;
+  charactersScope?: string;
+}
+
+export interface RivalsMetaCharacterStats {
+  source: "rivalsmeta";
+  hero: string;
+  role?: string;
+  tier?: RivalsMetaTier;
+  winRate?: number;
+  pickRate?: number;
+  banRate?: number;
+  matches?: number;
+  season?: string;
+  rankFilter?: string;
+  sourceUrl: string;
 }
 
 export type RivalsMetaPartialError = { rankFilter: string; message: string };
@@ -80,6 +97,19 @@ const HeroSchema = z.object({
   season: z.string().trim().min(1),
   rankFilter: z.string().trim().min(1),
   updatedAt: z.date(),
+  sourceUrl: z.string().url()
+});
+const CharacterStatsSchema = z.object({
+  source: z.literal("rivalsmeta"),
+  hero: z.string().trim().min(1),
+  role: z.string().optional(),
+  tier: z.enum(RIVALSMETA_TIERS).optional(),
+  winRate: z.number().finite().min(0).max(100).optional(),
+  pickRate: z.number().finite().min(0).optional(),
+  banRate: z.number().finite().min(0).optional(),
+  matches: z.number().int().nonnegative().optional(),
+  season: z.string().optional(),
+  rankFilter: z.string().optional(),
   sourceUrl: z.string().url()
 });
 
@@ -213,4 +243,57 @@ export function parseRivalsMetaTierList(html: string, options: RivalsMetaParseOp
 
   if (heroes.length === 0) throw new Error("RivalsMeta current-season data contained no valid rank results");
   return { source: "rivalsmeta", season, rankFilters: successfulRanks, updatedAt: options.updatedAt, sourceUrl: options.sourceUrl, heroes, errors };
+}
+
+function parseOptionalNumber(value: string, kind: "percent" | "integer"): number | undefined {
+  const normalized = value.trim().replaceAll(",", "").replace("%", "");
+  if (!normalized || normalized === "—" || normalized === "-") return undefined;
+  const parsed = Number(normalized);
+  if (!Number.isFinite(parsed)) return undefined;
+  return kind === "integer" ? Math.trunc(parsed) : parsed;
+}
+
+function roleFromSource(value: string): string | undefined {
+  const match = value.match(/\/(vanguard|duelist|strategist)\.png/i)?.[1]?.toLowerCase();
+  if (!match) return undefined;
+  return match[0].toUpperCase() + match.slice(1);
+}
+
+/** Parses the currently rendered public /characters statistics table. */
+export function parseRivalsMetaCharacters(
+  html: string,
+  options: { sourceUrl: string }
+): RivalsMetaCharacterStats[] {
+  const $ = cheerio.load(html);
+  const season = $("select option[selected]").last().text().trim() || undefined;
+  const rankFilter = $(".rank-name").first().text().trim() || "All Ranks";
+  const characters: RivalsMetaCharacterStats[] = [];
+
+  $("table tr").each((_, row) => {
+    const cells = $(row).find("td");
+    if (cells.length < 7) return;
+    const hero = cells.eq(0).find(".name").first().text().trim() ||
+      cells.eq(0).find("img[alt]").first().attr("alt")?.trim() || "";
+    if (!hero) return;
+    const tierText = cells.eq(2).find(".tier").first().text().trim().toUpperCase();
+    const candidate = {
+      source: "rivalsmeta" as const,
+      hero,
+      role: roleFromSource(cells.eq(1).find("img.hero-class").attr("src") ?? ""),
+      tier: RIVALSMETA_TIERS.includes(tierText as RivalsMetaTier) ? tierText as RivalsMetaTier : undefined,
+      winRate: parseOptionalNumber(cells.eq(3).text(), "percent"),
+      pickRate: parseOptionalNumber(cells.eq(4).text(), "percent"),
+      banRate: parseOptionalNumber(cells.eq(5).text(), "percent"),
+      matches: parseOptionalNumber(cells.eq(6).text(), "integer"),
+      season,
+      rankFilter,
+      sourceUrl: options.sourceUrl
+    };
+    const parsed = CharacterStatsSchema.safeParse(candidate);
+    if (!parsed.success) throw new Error(`Invalid RivalsMeta /characters row for ${hero}: ${parsed.error.issues[0]?.message}`);
+    characters.push(parsed.data);
+  });
+
+  if (characters.length === 0) throw new Error("RivalsMeta /characters contained no valid hero statistics");
+  return characters;
 }

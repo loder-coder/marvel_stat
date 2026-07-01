@@ -30,6 +30,8 @@ export interface HeroMeta {
   metaScore?: number;
   banRate?: number;
   matches?: number;
+  charactersSourceUrl?: string;
+  charactersScope?: string;
 }
 
 type Section = { mode: HeroMode; tier: HeroTier };
