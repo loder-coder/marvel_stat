@@ -6,6 +6,7 @@ import { RateBar } from "@/components/charts/RateBar";
 import { HeroDetailModal } from "@/components/hero/HeroDetailModal";
 import type { HeroMeta, HeroMode, HeroTier } from "@/lib/officialHeroParser";
 import type { HeroSort } from "@/lib/heroService";
+import ko from "@/locales/ko.json";
 
 export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: boolean }) {
   const [mode, setMode] = useState<HeroMode>("Quick");
@@ -18,8 +19,13 @@ export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: bo
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
     return heroes.filter((hero) => hero.mode === mode && hero.tier === tier && (!role || hero.role === role))
-      .filter((hero) => !query || hero.hero.toLowerCase().includes(query))
-      .sort((a, b) => sort === "hero" ? a.hero.localeCompare(b.hero) : b[sort] - a[sort] || a.hero.localeCompare(b.hero));
+      .filter((hero) => {
+        const translated = ko.heroes[hero.hero as keyof typeof ko.heroes] ?? hero.hero;
+        return !query || hero.hero.toLowerCase().includes(query) || translated.toLowerCase().includes(query);
+      })
+      .sort((a, b) => sort === "hero"
+        ? (ko.heroes[a.hero as keyof typeof ko.heroes] ?? a.hero).localeCompare(ko.heroes[b.hero as keyof typeof ko.heroes] ?? b.hero, "ko")
+        : b[sort] - a[sort] || a.hero.localeCompare(b.hero));
   }, [heroes, mode, tier, role, search, sort]);
 
   function changeMode(value: HeroMode) { setMode(value); setTier(value === "Quick" ? "Quick" : "Overall"); }
@@ -27,15 +33,15 @@ export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: bo
   return (
     <>
       <section className="dashboard-head">
-        <div><p className="eyebrow">OFFICIAL HERO HOT LIST</p><h1>Hero Meta Dashboard</h1><p className="updated">업데이트 {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(heroes[0].updatedAt))}{stale && <span className="stale-label">마지막 성공 데이터</span>}</p></div>
-        <div className="summary"><span>Heroes</span><strong>{visible.length}</strong></div>
+        <div><p className="eyebrow">{ko.dashboard.eyebrow}</p><h1>{ko.dashboard.title}</h1><p className="updated">{ko.dashboard.updatedAt} {new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(new Date(heroes[0].updatedAt))}{stale && <span className="stale-label">{ko.dashboard.stale}</span>}</p></div>
+        <div className="summary"><span>{ko.dashboard.heroCount}</span><strong>{visible.length}</strong></div>
       </section>
       <HeroFilters mode={mode} tier={tier} role={role} sort={sort} search={search} roles={roles} onMode={changeMode} onTier={setTier} onRole={setRole} onSort={setSort} onSearch={setSearch} />
       <section className="hero-list" aria-label="히어로 목록">
-        <div className="table-scroll"><table><thead><tr><th>#</th><th>Hero</th><th>Role</th><th>Pick Rate</th><th>Win Rate</th></tr></thead>
-          <tbody>{visible.map((hero, index) => <tr key={`${hero.mode}-${hero.tier}-${hero.role}-${hero.hero}`} tabIndex={0} onClick={() => setSelected(hero)} onKeyDown={(e) => e.key === "Enter" && setSelected(hero)}><td className="rank">{index + 1}</td><td><strong>{hero.hero}</strong></td><td><span className={`role role-${hero.role.toLowerCase()}`}>{hero.role}</span></td><td><RateBar kind="pick" value={hero.pickRate} /></td><td><RateBar kind="win" value={hero.winRate} /></td></tr>)}</tbody>
+        <div className="table-scroll"><table><thead><tr><th>{ko.labels.rank}</th><th>{ko.labels.hero}</th><th>{ko.labels.role}</th><th>{ko.labels.pickRate}</th><th>{ko.labels.winRate}</th></tr></thead>
+          <tbody>{visible.map((hero, index) => <tr key={`${hero.mode}-${hero.tier}-${hero.role}-${hero.hero}`} tabIndex={0} onClick={() => setSelected(hero)} onKeyDown={(e) => e.key === "Enter" && setSelected(hero)}><td className="rank">{index + 1}</td><td><strong>{ko.heroes[hero.hero as keyof typeof ko.heroes] ?? hero.hero}</strong></td><td><span className={`role role-${hero.role.toLowerCase()}`}>{ko.roles[hero.role as keyof typeof ko.roles] ?? hero.role}</span></td><td><RateBar kind="pick" value={hero.pickRate} /></td><td><RateBar kind="win" value={hero.winRate} /></td></tr>)}</tbody>
         </table></div>
-        {visible.length === 0 && <p className="empty">조건에 맞는 히어로가 없습니다.</p>}
+        {visible.length === 0 && <p className="empty">{ko.dashboard.empty}</p>}
       </section>
       <HeroDetailModal hero={selected} onClose={() => setSelected(null)} />
     </>

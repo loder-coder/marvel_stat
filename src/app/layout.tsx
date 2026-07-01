@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 import "./styles.css";
+import ko from "@/locales/ko.json";
 
 export const metadata: Metadata = {
-  title: "Hero Meta | Marvel Rivals",
-  description: "Official Marvel Rivals Hero Hot List dashboard"
+  title: ko.site.title,
+  description: ko.site.description
 };
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko">
       <body>
-        <header><a href="/"><span>HERO</span> META</a><nav><a href="/">Dashboard</a></nav></header>
+        <header><a href="/"><span>{ko.site.brandPrimary}</span> {ko.site.brandSecondary}</a><nav><a href="/">{ko.site.navigation}</a></nav></header>
         <main>{children}</main>
-        <footer>Data source: Official Marvel Rivals Hero Hot List</footer>
+        <footer>{ko.site.footer}</footer>
       </body>
     </html>
   );
