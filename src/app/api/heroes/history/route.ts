@@ -12,7 +12,14 @@ export async function GET(request: Request) {
   const days = Math.min(180, Math.max(1, Number.isFinite(parsedDays) ? parsedDays : 30));
 
   try {
-    return NextResponse.json(await getHeroMetaHistory({ hero, rankFilter, season, days }));
+    const result = await getHeroMetaHistory({ hero, rankFilter, season, days });
+    const reason =
+      result.data.length === 0
+        ? "no_history"
+        : result.data.length === 1
+          ? "not_enough_history"
+          : null;
+    return NextResponse.json({ ...result, reason });
   } catch (error) {
     console.error("[hero-history] History query failed", error);
     return NextResponse.json({ error: "Hero history is unavailable" }, { status: 502 });

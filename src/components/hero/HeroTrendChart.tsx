@@ -19,6 +19,7 @@ type HistoryResponse = {
   season: string;
   data: HistoryPoint[];
   delta: HistoryDelta;
+  reason: "no_history" | "not_enough_history" | null;
 };
 
 function signed(value: number, suffix: string): string {
@@ -40,8 +41,18 @@ export function HeroTrendChart({ hero, rankFilter, season }: { hero: string; ran
     const query = new URLSearchParams({ hero, rankFilter, season, days: "30" });
     fetch(`/api/heroes/history?${query}`, { signal: controller.signal })
       .then(async (response) => {
-        if (!response.ok) throw new Error(`History API failed (${response.status})`);
-        return response.json() as Promise<HistoryResponse>;
+        if (!response.ok) {
+          if (process.env.NODE_ENV !== "production") {
+            console.debug("[hero-history] response", { status: response.status, dataLength: null });
+          }
+          throw new Error(`History API failed (${response.status})`);
+        }
+        const value = await response.json() as HistoryResponse;
+        if (!Array.isArray(value.data)) throw new Error("History API returned invalid data");
+        if (process.env.NODE_ENV !== "production") {
+          console.debug("[hero-history] response", { status: response.status, dataLength: value.data.length });
+        }
+        return value;
       })
       .then((value) => setState({ status: "ready", value }))
       .catch((error: unknown) => {
@@ -65,9 +76,9 @@ export function HeroTrendChart({ hero, rankFilter, season }: { hero: string; ran
               <span>{ko.history.metaScoreDelta}<strong>{state.value.delta ? signed(state.value.delta.metaScore, "") : "—"}</strong></span>
             </div>
           )}
-          {state.value.data.length < 2 ? (
-            <p className="trend-state">{ko.history.notEnoughData}</p>
-          ) : (
+          {state.value.data.length === 0 && <p className="trend-state">{ko.history.noData}</p>}
+          {state.value.data.length === 1 && <p className="trend-state">{ko.history.singleData}</p>}
+          {state.value.data.length >= 2 && (
             <>
               <p className="chart-label">{ko.history.winRateTrend}</p>
               <div className="trend-chart">
