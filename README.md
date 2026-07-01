@@ -137,6 +137,62 @@ curl "https://YOUR_DOMAIN.com/api/heroes?rankFilter=Diamond%2B&metaTier=S"
 - 갱신 직후 일반 API 로그에 RivalsMeta fetch 메시지가 다시 발생하지 않는지
 - Redis의 current, last-success, last-refresh-at 키가 생성됐는지
 
+## 히스토리 저장
+
+Redis는 최신 데이터 캐시용이고, Supabase는 과거 스냅샷 저장용입니다. 매일 1회 Cron 갱신과 관리자 수동 갱신이 성공하면 같은 refresh 결과를 `hero_meta_snapshots`에 upsert합니다.
+
+같은 `source + snapshot_date + season + rank_filter + hero` 조합은 새 행을 만들지 않고 업데이트합니다. 히스토리 저장 실패는 Redis 최신 데이터 갱신을 실패시키지 않으며 refresh 응답의 `history.warning`으로 확인할 수 있습니다.
+
+```sql
+create extension if not exists pgcrypto;
+
+create table if not exists public.hero_meta_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  source text not null default 'rivalsmeta',
+  snapshot_date date not null,
+  captured_at timestamptz not null default now(),
+  season text not null,
+  rank_filter text not null,
+  hero text not null,
+  meta_tier text not null,
+  win_rate numeric(5,2) not null,
+  meta_score numeric(5,2) not null,
+  pick_rate numeric(5,2),
+  ban_rate numeric(5,2),
+  matches integer,
+  source_url text not null,
+  raw jsonb,
+  created_at timestamptz not null default now(),
+  unique (source, snapshot_date, season, rank_filter, hero)
+);
+
+create index if not exists idx_hero_meta_snapshots_hero
+on public.hero_meta_snapshots (hero);
+
+create index if not exists idx_hero_meta_snapshots_rank_hero_date
+on public.hero_meta_snapshots (rank_filter, hero, snapshot_date);
+
+create index if not exists idx_hero_meta_snapshots_season_rank_date
+on public.hero_meta_snapshots (season, rank_filter, snapshot_date);
+
+alter table public.hero_meta_snapshots enable row level security;
+```
+
+동일한 SQL은 [Supabase migration](supabase/migrations/20260702000000_create_hero_meta_snapshots.sql)에 있습니다. `SUPABASE_SERVICE_ROLE_KEY`는 서버에서만 사용되며 브라우저에 전달되지 않습니다.
+
+## 히스토리 API
+
+```text
+GET /api/heroes/history?hero=Peni%20Parker&rankFilter=Diamond%2B&days=30
+```
+
+- `hero`: 필수 canonical 영문명
+- `rankFilter`: 기본 `Diamond+`
+- `season`: 생략하면 저장된 최신 시즌
+- `days`: 기본 30, 최소 1, 최대 180
+
+Drawer의 승률 변화 그래프는 이 API를 영웅 선택 시 한 번 호출합니다. 날짜가 2개 이상 쌓여야 추세선을 표시하며, 그 전에는 데이터 부족 안내가 표시됩니다.
+
 ## Meta Score
 
 ```text

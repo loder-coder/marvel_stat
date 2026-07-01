@@ -8,6 +8,14 @@ import { DataTable } from "@/components/ui/DataTable";
 import { rankHeroMeta, type MetaTier, type RankedHero } from "@/lib/metaTier";
 import type { HeroMeta, HeroMode, HeroTier } from "@/lib/officialHeroParser";
 import type { HeroSource } from "@/lib/heroService";
+import {
+  localizeField,
+  localizeHeroName,
+  localizeOriginalLink,
+  localizeRankFilter,
+  localizeRefreshPolicy,
+  localizeSort
+} from "@/lib/localize";
 import ko from "@/locales/ko.json";
 
 export type TableSort = "rank" | "hero" | "pickRate" | "winRate";
@@ -45,16 +53,17 @@ export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
     const result = population.filter((hero) => {
-      const name = ko.heroes[hero.hero as keyof typeof ko.heroes] ?? hero.hero;
+      const name = localizeHeroName(hero.hero);
+      const searchText = `${hero.hero} ${name}`.toLowerCase();
       return (!role || hero.role === role) &&
         (!metaTier || hero.metaTier === metaTier) &&
-        (!query || hero.hero.toLowerCase().includes(query) || name.toLowerCase().includes(query));
+        (!query || searchText.includes(query));
     });
     return result.sort((a, b) => {
       let comparison: number;
       if (sort === "hero") {
-        const aName = ko.heroes[a.hero as keyof typeof ko.heroes] ?? a.hero;
-        const bName = ko.heroes[b.hero as keyof typeof ko.heroes] ?? b.hero;
+        const aName = localizeHeroName(a.hero);
+        const bName = localizeHeroName(b.hero);
         comparison = aName.localeCompare(bName, "ko");
       } else if (sort === "rank") {
         comparison = (a.metaRank ?? Number.MAX_SAFE_INTEGER) - (b.metaRank ?? Number.MAX_SAFE_INTEGER);
@@ -68,7 +77,7 @@ export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
   const updatedAt = new Date(heroes[0].updatedAt);
   const formattedUpdate = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(updatedAt);
   const patchLabel = isRivalsMeta
-    ? `${heroes[0].season ?? "-"} / ${heroes[0].rankFilter ?? "-"}`
+    ? `${heroes[0].season ?? "-"} / ${localizeRankFilter(heroes[0].rankFilter ?? "-")}`
     : new Intl.DateTimeFormat("ko-KR", { dateStyle: "short", timeZone: "Asia/Seoul" }).format(updatedAt);
 
   const changeMode = useCallback((value: HeroMode) => {
@@ -93,9 +102,9 @@ export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
       </div>
       {isRivalsMeta && (
         <div className="source-notice">
-          <strong>{ko.dashboard.dataScope}: {season} / {rankFilter}</strong>
-          <p>{ko.dashboard.sourceDescription}</p>
-          <a href={sourceUrl} target="_blank" rel="noreferrer">{ko.dashboard.sourceOriginal}</a>
+          <strong>{ko.dashboard.dataScope}: {season} / {localizeRankFilter(rankFilter)}</strong>
+          <p>{localizeRefreshPolicy("daily_cron_manual_refresh")}</p>
+          <a href={sourceUrl} target="_blank" rel="noreferrer">{localizeOriginalLink()}</a>
         </div>
       )}
 
@@ -107,18 +116,18 @@ export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
       <section className="table-panel" aria-label="히어로 메타 목록">
         <div className="table-toolbar">
           <strong>{ko.dashboard.heroCount} <b>{visible.length}</b></strong>
-          <span>{isRivalsMeta ? `${season} / ${rankFilter}` : `${ko.modes[mode]} / ${ko.tiers[tier]}`}</span>
-          <a href={sourceUrl} target="_blank" rel="noreferrer">{isRivalsMeta ? ko.dashboard.sourceOriginal : ko.navigation.officialData}</a>
+          <span>{isRivalsMeta ? `${season} / ${localizeRankFilter(rankFilter)}` : `${ko.modes[mode]} / ${ko.tiers[tier]}`}</span>
+          <a href={sourceUrl} target="_blank" rel="noreferrer">{isRivalsMeta ? localizeOriginalLink() : ko.navigation.officialData}</a>
         </div>
         <DataTable>
           <thead><tr>
-            <th><button onClick={() => changeSort("rank")}>{ko.labels.rank} {sortMark("rank")}</button></th>
-            <th>{ko.labels.metaTier}</th>
-            <th><button onClick={() => changeSort("hero")}>{ko.labels.hero} {sortMark("hero")}</button></th>
-            <th>{ko.labels.role}</th>
-            <th><button onClick={() => changeSort("pickRate")}>{ko.labels.pickRate} {sortMark("pickRate")}</button></th>
-            <th><button onClick={() => changeSort("winRate")}>{ko.labels.winRate} {sortMark("winRate")}</button></th>
-            <th>{ko.labels.trend}</th>
+            <th><button title={localizeSort("rank")} onClick={() => changeSort("rank")}>{localizeField("rank")} {sortMark("rank")}</button></th>
+            <th>{localizeField("metaTier")}</th>
+            <th><button title={localizeSort("hero")} onClick={() => changeSort("hero")}>{localizeField("hero")} {sortMark("hero")}</button></th>
+            <th>{localizeField("role")}</th>
+            <th><button title={localizeSort("pickRate")} onClick={() => changeSort("pickRate")}>{localizeField("pickRate")} {sortMark("pickRate")}</button></th>
+            <th><button title={localizeSort("winRate")} onClick={() => changeSort("winRate")}>{localizeField("winRate")} {sortMark("winRate")}</button></th>
+            <th>{localizeField("trend")}</th>
           </tr></thead>
           <tbody>{visible.map((hero, index) => <HeroRow key={`${hero.source}-${hero.hero}`} hero={hero} position={index + 1} onSelect={selectHero} />)}</tbody>
         </DataTable>

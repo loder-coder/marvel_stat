@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 import ko from "@/locales/ko.json";
+import { localizeSource } from "@/lib/localize";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -13,7 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <p>{ko.navigation.gameData}</p>
           <a className="is-active" href="/"><span>▦</span>{ko.site.navigation}</a>
         </nav>
-        <div className="sidebar-source"><span>{ko.navigation.dataSource}</span><strong>{ko.navigation.rivalsMetaData}</strong></div>
+        <div className="sidebar-source"><span>{ko.navigation.dataSource}</span><strong>{localizeSource("rivalsmeta")}</strong></div>
       </aside>
       {open && <button className="drawer-scrim" aria-label={ko.labels.close} onClick={() => setOpen(false)} />}
       <div className="content-shell">
