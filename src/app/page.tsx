@@ -1,1 +1,13 @@
-export default function Home() { return <section className="panel hero"><p className="eyebrow">MARVEL RIVALS · MVP</p><h1>메타는 매일, 플레이어는 필요할 때.</h1><p>영웅/티어 통계는 오전 6시 일괄 갱신하고, 플레이어 데이터는 짧은 TTL 캐시로 필요한 순간에만 갱신합니다.</p><a className="button" href="/players">플레이어 검색하기</a></section>; }
+import { HeroDashboard } from "@/components/hero/HeroDashboard";
+import { getHeroes } from "@/lib/heroService";
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  try {
+    const result = await getHeroes();
+    return <HeroDashboard heroes={result.data} stale={result.stale} />;
+  } catch {
+    return <section className="error-panel"><p className="eyebrow">OFFICIAL HERO HOT LIST</p><h1>Hero Meta Dashboard</h1><p>공식 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p></section>;
+  }
+}

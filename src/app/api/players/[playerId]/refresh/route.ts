@@ -1,5 +1,0 @@
-import { NextRequest, NextResponse } from "next/server";
-import { config } from "@/lib/config";
-import { refreshPlayer } from "@/lib/playerService";
-import { getCached } from "@/lib/cache";
-export async function POST(request: NextRequest, { params }: { params: Promise<{ playerId: string }> }) { if (!config.useMock && request.headers.get("authorization") !== `Bearer ${process.env.ADMIN_REFRESH_TOKEN}`) return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 }); const playerId = (await params).playerId; const previous = await getCached<{ refreshedAt: string }>(`marvel:player:${playerId}:cache-status`); if (previous && Date.now() - Date.parse(previous.value.refreshedAt) < config.cooldownSeconds * 1000) return NextResponse.json({ error: "REFRESH_COOLDOWN" }, { status: 429, headers: { "Retry-After": String(config.cooldownSeconds) } }); try { return NextResponse.json(await refreshPlayer(playerId)); } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "UNKNOWN" }, { status: 429 }); } }

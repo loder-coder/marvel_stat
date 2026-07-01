@@ -2,22 +2,17 @@ import type { Metadata } from "next";
 import "./styles.css";
 
 export const metadata: Metadata = {
-  title: "Marvel Stat",
-  description: "Marvel Rivals player and hero statistics"
+  title: "Hero Meta | Marvel Rivals",
+  description: "Official Marvel Rivals Hero Hot List dashboard"
 };
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko">
       <body>
-        <header>
-          <a href="/">MARVEL STAT</a>
-          <nav>
-            <a href="/players">플레이어 검색</a>
-            <a href="/heroes">영웅 메타</a>
-          </nav>
-        </header>
+        <header><a href="/"><span>HERO</span> META</a><nav><a href="/">Dashboard</a></nav></header>
         <main>{children}</main>
+        <footer>Data source: Official Marvel Rivals Hero Hot List</footer>
       </body>
     </html>
   );
