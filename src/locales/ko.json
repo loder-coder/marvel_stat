@@ -250,5 +250,23 @@
       "Winter Soldier": "윈터 솔져",
       "Wolverine": "울버린"
     }
+  },
+  "history": {
+    "title": "승률 변화",
+    "description": "매일 저장된 RivalsMeta 공개 티어표 데이터를 기준으로 한 변화입니다.",
+    "notEnoughData": "아직 변화 그래프를 표시할 만큼 히스토리 데이터가 부족합니다. 며칠 더 수집되면 추세가 표시됩니다.",
+    "winRateTrend": "승률 추이",
+    "metaScoreTrend": "메타 점수 추이",
+    "deltaUp": "상승",
+    "deltaDown": "하락",
+    "deltaFlat": "변화 없음",
+    "days30": "최근 30일",
+    "sourceNotice": "RivalsMeta 공개 티어표 데이터를 자체 저장·재가공한 값입니다.",
+    "loading": "히스토리를 불러오는 중입니다.",
+    "error": "히스토리를 불러오지 못했습니다.",
+    "currentWinRate": "현재 승률",
+    "winRateDelta": "30일 전 대비",
+    "metaScoreDelta": "메타 점수 변화",
+    "tierChanged": "티어 변경"
   }
 }
