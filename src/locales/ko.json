@@ -5,7 +5,7 @@
     "navigation": "대시보드",
     "title": "히어로 메타 | 마블 라이벌즈",
     "description": "마블 라이벌즈 공식 영웅 인기 순위 대시보드",
-    "footer": "데이터 출처: 마블 라이벌즈 공식 영웅 인기 순위"
+    "footer": "데이터 출처: RivalsMeta 공개 티어표 · 매일 1회 자동 갱신 · RivalsMeta, Marvel, NetEase Games와 비공식 사이트"
   },
   "dashboard": {
     "eyebrow": "공식 영웅 인기 순위",
@@ -18,12 +18,18 @@
     "metaTitle": "메타 티어 리스트",
     "patch": "데이터 기준",
     "trendUnavailable": "이전 데이터 없음",
-    "excluded": "픽률 기준 미달"
+    "excluded": "픽률 기준 미달",
+    "sourceOriginal": "RivalsMeta 원본 보기",
+    "refreshPolicy": "매일 1회 자동 갱신 · 필요 시 관리자 수동 갱신",
+    "dataScope": "현재 데이터 범위",
+    "sourceDescription": "현재 데이터는 RivalsMeta 공개 티어표의 현재 시즌 기준으로 수집되며, 매일 1회 자동 갱신되고 필요 시 관리자가 수동 갱신합니다.",
+    "attribution": "영웅 티어 및 승률 데이터는 RivalsMeta 공개 티어표를 기준으로 매일 1회 자동 갱신됩니다. 본 사이트는 데이터를 자체적으로 재가공하여 표시하며, RivalsMeta의 이미지·설명문·레이아웃을 복제하지 않습니다. 본 사이트는 RivalsMeta, Marvel, NetEase Games와 공식적으로 관련이 없습니다."
   },
   "navigation": {
     "gameData": "게임 데이터",
     "dataSource": "데이터 출처",
     "officialData": "공식 Hero Hot List",
+    "rivalsMetaData": "RivalsMeta 공개 티어표",
     "openMenu": "메뉴 열기"
   },
   "labels": {
@@ -44,7 +50,9 @@
     "metaScore": "메타 점수",
     "trend": "최근 변동",
     "updated": "최근 업데이트",
-    "allMetaTiers": "모든 메타 티어"
+    "allMetaTiers": "모든 메타 티어",
+    "season": "시즌",
+    "rankFilter": "랭크 필터"
   },
   "sorts": {
     "pickRate": "픽률 높은 순",

@@ -22,6 +22,14 @@ export interface HeroMeta {
   pickRate: number;
   winRate: number;
   updatedAt: Date;
+  source?: "official" | "rivalsmeta";
+  sourceUrl?: string;
+  season?: string;
+  rankFilter?: string;
+  metaTier?: "S" | "A" | "B" | "C" | "D";
+  metaScore?: number;
+  banRate?: number;
+  matches?: number;
 }
 
 type Section = { mode: HeroMode; tier: HeroTier };
@@ -116,7 +124,8 @@ export function parseHeroTsv(tsv: string): HeroMeta[] {
       hero: HEROES[cells[1]] ?? cells[1],
       pickRate: parsePercent(cells[2]),
       winRate: parsePercent(cells[3]),
-      updatedAt
+      updatedAt,
+      source: "official"
     });
   }
 

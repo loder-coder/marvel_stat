@@ -15,8 +15,8 @@ export const HeroRow = memo(function HeroRow({ hero, position, onSelect }: Props
       <td className="rank-cell">{hero.metaRank ?? position}</td>
       <td><TierBadge tier={hero.metaTier} /></td>
       <td><span className="table-hero"><span className="hero-thumb">{name.slice(0, 1)}</span><strong>{name}</strong></span></td>
-      <td><span className="role-text">{ko.roles[hero.role as keyof typeof ko.roles] ?? hero.role}</span></td>
-      <td><StatCell value={hero.pickRate} /></td>
+      <td><span className="role-text">{hero.role ? (ko.roles[hero.role as keyof typeof ko.roles] ?? hero.role) : "—"}</span></td>
+      <td>{hero.source === "rivalsmeta" ? "—" : <StatCell value={hero.pickRate} />}</td>
       <td><StatCell value={hero.winRate} emphasis /></td>
       <td className="trend-cell"><span>—</span><small>{ko.dashboard.trendUnavailable}</small></td>
     </tr>

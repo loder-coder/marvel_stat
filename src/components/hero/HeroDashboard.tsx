@@ -7,26 +7,41 @@ import { HeroRow } from "@/components/hero/HeroRow";
 import { DataTable } from "@/components/ui/DataTable";
 import { rankHeroMeta, type MetaTier, type RankedHero } from "@/lib/metaTier";
 import type { HeroMeta, HeroMode, HeroTier } from "@/lib/officialHeroParser";
+import type { HeroSource } from "@/lib/heroService";
 import ko from "@/locales/ko.json";
 
 export type TableSort = "rank" | "hero" | "pickRate" | "winRate";
 type SortDirection = "asc" | "desc";
 
-export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: boolean }) {
-  const [mode, setMode] = useState<HeroMode>("Quick");
-  const [tier, setTier] = useState<HeroTier>("Quick");
+type Props = {
+  heroes: HeroMeta[];
+  stale: boolean;
+  source: HeroSource;
+  sourceUrl: string;
+};
+
+export function HeroDashboard({ heroes, stale, source, sourceUrl }: Props) {
+  const isRivalsMeta = source === "rivalsmeta";
+  const [mode, setMode] = useState<HeroMode>(isRivalsMeta ? "Competitive" : "Quick");
+  const [tier, setTier] = useState<HeroTier>(isRivalsMeta ? "Overall" : "Quick");
   const [role, setRole] = useState("");
   const [metaTier, setMetaTier] = useState<MetaTier | "">("");
+  const [season, setSeason] = useState(heroes[0]?.season ?? "");
+  const [rankFilter, setRankFilter] = useState(heroes[0]?.rankFilter ?? "");
   const [sort, setSort] = useState<TableSort>("rank");
   const [direction, setDirection] = useState<SortDirection>("asc");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<RankedHero | null>(null);
 
-  const population = useMemo(
-    () => rankHeroMeta(heroes.filter((hero) => hero.mode === mode && hero.tier === tier)),
-    [heroes, mode, tier]
-  );
-  const roles = useMemo(() => [...new Set(population.map((hero) => hero.role))].sort(), [population]);
+  const population = useMemo(() => rankHeroMeta(heroes.filter((hero) =>
+    isRivalsMeta
+      ? (!season || hero.season === season) && (!rankFilter || hero.rankFilter === rankFilter)
+      : hero.mode === mode && hero.tier === tier
+  )), [heroes, isRivalsMeta, season, rankFilter, mode, tier]);
+  const roles = useMemo(() => [...new Set(population.map((hero) => hero.role).filter(Boolean))].sort(), [population]);
+  const availableSeasons = useMemo(() => [...new Set(heroes.map((hero) => hero.season).filter((value): value is string => Boolean(value)))], [heroes]);
+  const availableRanks = useMemo(() => [...new Set(heroes.map((hero) => hero.rankFilter).filter((value): value is string => Boolean(value)))], [heroes]);
+
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
     const result = population.filter((hero) => {
@@ -52,7 +67,9 @@ export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: bo
 
   const updatedAt = new Date(heroes[0].updatedAt);
   const formattedUpdate = new Intl.DateTimeFormat("ko-KR", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Seoul" }).format(updatedAt);
-  const patchLabel = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit", timeZone: "Asia/Seoul" }).format(updatedAt);
+  const patchLabel = isRivalsMeta
+    ? `${heroes[0].season ?? "-"} / ${heroes[0].rankFilter ?? "-"}`
+    : new Intl.DateTimeFormat("ko-KR", { dateStyle: "short", timeZone: "Asia/Seoul" }).format(updatedAt);
 
   const changeMode = useCallback((value: HeroMode) => {
     setMode(value); setTier(value === "Quick" ? "Quick" : "Overall"); setSelected(null);
@@ -63,8 +80,7 @@ export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: bo
     if (next === sort) setDirection((current) => current === "asc" ? "desc" : "asc");
     else { setSort(next); setDirection(next === "hero" || next === "rank" ? "asc" : "desc"); }
   }, [sort]);
-
-  const sortMark = (column: TableSort) => sort === column ? (direction === "asc" ? "▲" : "▼") : "";
+  const sortMark = (column: TableSort) => sort === column ? (direction === "asc" ? "\u2191" : "\u2193") : "";
 
   return (
     <>
@@ -75,12 +91,25 @@ export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: bo
           <div><dt>{ko.dashboard.patch}</dt><dd>{patchLabel}</dd></div>
         </dl>
       </div>
+      {isRivalsMeta && (
+        <div className="source-notice">
+          <strong>{ko.dashboard.dataScope}: {season} / {rankFilter}</strong>
+          <p>{ko.dashboard.sourceDescription}</p>
+          <a href={sourceUrl} target="_blank" rel="noreferrer">{ko.dashboard.sourceOriginal}</a>
+        </div>
+      )}
 
-      <FilterBar mode={mode} tier={tier} role={role} metaTier={metaTier} search={search} roles={roles}
-        onMode={changeMode} onTier={setTier} onRole={setRole} onMetaTier={setMetaTier} onSearch={setSearch} />
+      <FilterBar source={source} mode={mode} tier={tier} role={role} metaTier={metaTier}
+        season={season} rankFilter={rankFilter} availableSeasons={availableSeasons} availableRanks={availableRanks}
+        search={search} roles={roles} onMode={changeMode} onTier={setTier} onRole={setRole}
+        onMetaTier={setMetaTier} onSeason={setSeason} onRankFilter={setRankFilter} onSearch={setSearch} />
 
       <section className="table-panel" aria-label="히어로 메타 목록">
-        <div className="table-toolbar"><strong>{ko.dashboard.heroCount} <b>{visible.length}</b></strong><span>{ko.modes[mode]} · {ko.tiers[tier]}</span></div>
+        <div className="table-toolbar">
+          <strong>{ko.dashboard.heroCount} <b>{visible.length}</b></strong>
+          <span>{isRivalsMeta ? `${season} / ${rankFilter}` : `${ko.modes[mode]} / ${ko.tiers[tier]}`}</span>
+          <a href={sourceUrl} target="_blank" rel="noreferrer">{isRivalsMeta ? ko.dashboard.sourceOriginal : ko.navigation.officialData}</a>
+        </div>
         <DataTable>
           <thead><tr>
             <th><button onClick={() => changeSort("rank")}>{ko.labels.rank} {sortMark("rank")}</button></th>
@@ -91,10 +120,11 @@ export function HeroDashboard({ heroes, stale }: { heroes: HeroMeta[]; stale: bo
             <th><button onClick={() => changeSort("winRate")}>{ko.labels.winRate} {sortMark("winRate")}</button></th>
             <th>{ko.labels.trend}</th>
           </tr></thead>
-          <tbody>{visible.map((hero, index) => <HeroRow key={`${hero.mode}-${hero.tier}-${hero.role}-${hero.hero}`} hero={hero} position={index + 1} onSelect={selectHero} />)}</tbody>
+          <tbody>{visible.map((hero, index) => <HeroRow key={`${hero.source}-${hero.hero}`} hero={hero} position={index + 1} onSelect={selectHero} />)}</tbody>
         </DataTable>
         {visible.length === 0 && <p className="empty">{ko.dashboard.empty}</p>}
       </section>
+      {isRivalsMeta && <p className="source-policy">{ko.dashboard.attribution}</p>}
       <HeroDrawer hero={selected} onClose={closeDrawer} />
     </>
   );

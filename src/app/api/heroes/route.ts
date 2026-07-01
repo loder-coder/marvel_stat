@@ -22,6 +22,9 @@ export async function GET(request: Request) {
       tier: (tier as HeroTier | null) ?? undefined,
       role: params.get("role") ?? undefined,
       mode: (mode as HeroMode | null) ?? undefined,
+      season: params.get("season") ?? undefined,
+      rankFilter: params.get("rankFilter") ?? undefined,
+      metaTier: params.get("metaTier") ?? undefined,
       sort: (sort as HeroSort | null) ?? undefined
     });
     return NextResponse.json({
@@ -29,10 +32,19 @@ export async function GET(request: Request) {
       meta: {
         count: data.length,
         stale: result.stale,
-        updatedAt: data[0]?.updatedAt ?? result.data[0]?.updatedAt ?? null
+        source: result.source === "rivalsmeta" ? "RivalsMeta" : "Official Hero Hot List",
+        sourceUrl: result.sourceUrl,
+        season: result.season,
+        rankFilter: params.get("rankFilter") ?? null,
+        availableRankFilters: result.availableRankFilters,
+        updatedAt: result.updatedAt,
+        refreshPolicy: "daily_cron_manual_refresh",
+        refreshPolicyLabel: "하루 1회 자동 갱신 · 필요 시 관리자 수동 갱신",
+        attributionRequired: true
       }
     });
-  } catch {
-    return NextResponse.json({ error: "Official Hero Hot List is unavailable" }, { status: 502 });
+  } catch (error) {
+    console.error("[hero-api] Unable to load cached hero metadata", error);
+    return NextResponse.json({ error: "Hero metadata is unavailable" }, { status: 502 });
   }
 }

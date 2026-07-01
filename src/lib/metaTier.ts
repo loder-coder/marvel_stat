@@ -12,7 +12,7 @@ export const META_TIER_PERCENTILES = {
 } as const;
 
 export type MetaTier = keyof typeof META_TIER_PERCENTILES;
-export type RankedHero = HeroMeta & {
+export type RankedHero = Omit<HeroMeta, "metaTier"> & {
   metaScore: number;
   metaTier: MetaTier | null;
   metaRank: number | null;
@@ -23,6 +23,20 @@ export type RankedHero = HeroMeta & {
  * Pick rate is normalized to the population maximum so it can be combined with win rate.
  */
 export function rankHeroMeta(heroes: HeroMeta[]): RankedHero[] {
+  if (heroes.some((hero) => hero.source === "rivalsmeta")) {
+    const order: Record<NonNullable<HeroMeta["metaTier"]>, number> = { S: 0, A: 1, B: 2, C: 3, D: 4 };
+    const sorted = [...heroes].sort((a, b) =>
+      order[a.metaTier ?? "D"] - order[b.metaTier ?? "D"] || b.winRate - a.winRate
+    );
+    const ranks = new Map(sorted.map((hero, index) => [hero.hero, index + 1]));
+    return heroes.map((hero) => ({
+      ...hero,
+      metaScore: hero.metaScore ?? hero.winRate,
+      metaTier: hero.metaTier ?? null,
+      metaRank: ranks.get(hero.hero) ?? null
+    }));
+  }
+
   const maxPickRate = Math.max(...heroes.map((hero) => hero.pickRate), 1);
   const scored = heroes.map((hero) => ({
     ...hero,

@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function Home() {
   try {
     const result = await getHeroes();
-    return <HeroDashboard heroes={result.data} stale={result.stale} />;
+    return <HeroDashboard heroes={result.data} stale={result.stale} source={result.source} sourceUrl={result.sourceUrl} />;
   } catch {
     return <section className="error-panel"><p className="eyebrow">{ko.dashboard.eyebrow}</p><h1>{ko.dashboard.title}</h1><p>{ko.dashboard.loadError}</p></section>;
   }
