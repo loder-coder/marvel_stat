@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./styles.css";
 import ko from "@/locales/ko.json";
+import { AppShell } from "@/components/layout/AppShell";
 
 export const metadata: Metadata = {
   title: ko.site.title,
@@ -11,9 +12,7 @@ export default function Layout({ children }: Readonly<{ children: React.ReactNod
   return (
     <html lang="ko">
       <body>
-        <header><a href="/"><span>{ko.site.brandPrimary}</span> {ko.site.brandSecondary}</a><nav><a href="/">{ko.site.navigation}</a></nav></header>
-        <main>{children}</main>
-        <footer>{ko.site.footer}</footer>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

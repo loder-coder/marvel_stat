@@ -14,7 +14,17 @@
     "stale": "마지막 성공 데이터",
     "heroCount": "히어로",
     "empty": "조건에 맞는 히어로가 없습니다.",
-    "loadError": "공식 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."
+    "loadError": "공식 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+    "metaTitle": "메타 티어 리스트",
+    "patch": "데이터 기준",
+    "trendUnavailable": "이전 데이터 없음",
+    "excluded": "픽률 기준 미달"
+  },
+  "navigation": {
+    "gameData": "게임 데이터",
+    "dataSource": "데이터 출처",
+    "officialData": "공식 Hero Hot List",
+    "openMenu": "메뉴 열기"
   },
   "labels": {
     "rank": "순위",
@@ -29,7 +39,12 @@
     "heroSearch": "히어로 검색",
     "searchPlaceholder": "히어로 이름 검색",
     "allRoles": "모든 역할",
-    "close": "닫기"
+    "close": "닫기",
+    "metaTier": "메타 티어",
+    "metaScore": "메타 점수",
+    "trend": "최근 변동",
+    "updated": "최근 업데이트",
+    "allMetaTiers": "모든 메타 티어"
   },
   "sorts": {
     "pickRate": "픽률 높은 순",
